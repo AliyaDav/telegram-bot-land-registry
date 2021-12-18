@@ -26,20 +26,6 @@ logger.info('Starting Bot...')
 ''' States'''
 CHOOSING, REDIRECTING = range(2)
 
-# @app.route('/{}'.format(TOKEN), methods=['POST'])
-# def start():
-#    update = telegram.Update.de_json(request.get_json(force=True), bot)
-
-#    chat_id = update.message.chat.id
-#    msg_id = update.message.message_id
-
-#    text = update.message.text.encode('utf-8').decode()
-#    print("got text message :", text)
-#    if text == "/start":
-#        bot_welcome = "Hello! This is blockchain-based land registry"
-#        bot.sendMessage(chat_id=chat_id, text=bot_welcome, reply_to_message_id=msg_id)
-#        bot.sendMessage(chat_id=chat_id, text="<a href='https://flask-telebot.herokuapp.com/index.html'>Blockchain Registry</a>",parse_mode=ParseMode.HTML)
-
 def start(update: Update, context: CallbackContext) -> int:
 
     text = update.message.text.encode('utf-8').decode()
@@ -55,8 +41,6 @@ def start(update: Update, context: CallbackContext) -> int:
     # bot_welcome = "Hello! This is blockchain-based land registry. What would you like to do?"
     # update.message.reply_text(bot_welcome, reply_markup = reply_kb_markup)
 
-#    if request.method == 'POST':
-    # if text == "/start":
     bot_welcome = "Hello! This is blockchain-based land registry. What would you like to do?"
     update.message.reply_text(bot_welcome, 
                             reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
@@ -64,7 +48,16 @@ def start(update: Update, context: CallbackContext) -> int:
 
     return CHOOSING
 
-
+def force_choosing(update: Update, context: CallbackContext) -> int:
+    
+    reply_keyboard = [['Check property ownership', 'Get NFT', 'Buy/sell property']]
+    text = update.message.text
+    logger.info(f'User texted {text}')
+    update.message.reply_text('Please choose one of the following options', reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
+                            one_time_keyboard=True))
+    
+    return CHOOSING
+    
 def go_website(update: Update, context: CallbackContext) -> int:
     
     user = update.message.from_user
@@ -73,7 +66,7 @@ def go_website(update: Update, context: CallbackContext) -> int:
     logger.info("Choice of %s: %s", user.first_name, text)    
     # message = 
     update.message.reply_text(f'Perfect! In order to {text.lower()}, we need to know more about you. Please follow the link and fill out the form:', reply_markup=ReplyKeyboardRemove())
-    update.message.reply_markdown('[Blockchain Registry](https://flask-telebot.herokuapp.com/index.html)')
+    update.message.reply_markdown('[Blockchain Registry](http://tg-landreg.herokuapp.com/)')
 
     return REDIRECTING
 
@@ -123,7 +116,7 @@ def main() -> None:
             CHOOSING: [
                 MessageHandler(Filters.text(['Check property ownership', 'Get NFT', 'Buy/sell property']), go_website
                 ),
-                # MessageHandler(Filters.regex('^Something else...$'), custom_choice),
+                MessageHandler(Filters.text & ~Filters.text(['Check property ownership', 'Get NFT', 'Buy/sell property']), force_choosing),
             ],
             REDIRECTING: [
                 MessageHandler(Filters.text, received_information,
