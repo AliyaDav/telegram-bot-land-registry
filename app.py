@@ -32,15 +32,6 @@ def start(update: Update, context: CallbackContext) -> int:
     reply_keyboard = [['Check property ownership', 'Get NFT', 'Buy/sell property']]
     logger.info(f'User texted {text}')
 
-    # '''Commands menu'''
-    # main_menu_keyboard = [[telegram.KeyboardButton('/start')],
-    #                       [telegram.KeyboardButton('/help')]]
-    # reply_kb_markup = telegram.ReplyKeyboardMarkup(main_menu_keyboard,
-    #                                                resize_keyboard=True,
-    #                                                one_time_keyboard=True)
-    # bot_welcome = "Hello! This is blockchain-based land registry. What would you like to do?"
-    # update.message.reply_text(bot_welcome, reply_markup = reply_kb_markup)
-
     bot_welcome = "Hello! This is blockchain-based land registry. What would you like to do?"
     if (text.lower() == 'start again')|(text.lower() == 'cancel'):
         update.message.reply_text("Let's start again. What would you like to do?", 
@@ -393,7 +384,7 @@ def main() -> None:
                 MessageHandler(Filters.text(['back', 'Back']), received_information)
             ]
         },
-        fallbacks = [MessageHandler(Filters.regex(['^cancel$', 'Start again']), start_again)]
+        fallbacks = [MessageHandler(Filters.text(['cancel', 'Start again', '/start']), start_again)]
     )
 
     dispatcher.add_handler(conv_handler)
@@ -406,13 +397,6 @@ def main() -> None:
     #                     webhook_url = APP_URL + BOT_TOKEN)
     updater.start_polling()
     updater.idle()
-
-# def set_webhook():
-#    s = bot.setWebhook('{APP_URL}{HOOK}'.format(URL=APP_URL, HOOK=BOT_TOKEN))
-#    if s:
-#        return "webhook setup ok"
-#    else:
-#        return "webhook setup failed"
 
 if __name__ == '__main__':
     main()
