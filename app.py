@@ -398,13 +398,13 @@ def main() -> None:
 
     dispatcher.add_handler(conv_handler)
 
-    updater.start_webhook(listen='0.0.0.0',
-                      port=PORT,
-                    #   key='/Users/aliyadavletshina/private.key',
-                    #   cert='/Users/aliyadavletshina/cert.pem',
-                        url_path=BOT_TOKEN, 
-                        webhook_url = APP_URL + BOT_TOKEN)
-    # updater.start_polling()
+    # updater.start_webhook(listen='0.0.0.0',
+    #                         port=PORT,
+    #                 #   key='/Users/aliyadavletshina/private.key',
+    #                 #   cert='/Users/aliyadavletshina/cert.pem',
+    #                     url_path=BOT_TOKEN, 
+    #                     webhook_url = APP_URL + BOT_TOKEN)
+    updater.start_polling()
     updater.idle()
 
 # def set_webhook():
