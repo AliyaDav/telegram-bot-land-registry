@@ -23,7 +23,7 @@ chardet==3.0.4
 charset-normalizer==2.0.9
 cryptography==36.0.0
 cytoolz==0.11.2
-dnspython==2.2.0
+dnspython==2.2.0rc1
 eth-abi==2.1.1
 eth-account==0.5.6
 eth-hash==0.3.2
