@@ -1,4 +1,5 @@
 # from . import db
+from types import MappingProxyType
 import pymongo
 from mongoengine import *
 import os
@@ -101,3 +102,19 @@ class Property(Document):
 #     db.drop_all()
 #     db.create_all()
 #     return
+
+
+from pymongo import MongoClient
+
+client = MongoClient('mongodb+srv://aliya:Intrusion2021@cluster0.pg1ab.mongodb.net/landreg?retryWrites=true&w=majority')
+
+user1 = {'first name': 'Aliya', 'last name': 'Davletshina'}
+db = client.landreg
+db.users.insert_one(user1)
+
+db.users['first name']
+
+user = user_info_dict(context.user_data)
+user['property'] = property_info_dict(context.user_data)
+user['date_modified'] = datetime.datetime.utcnow
+result = db.users.insert_one(user)

@@ -16,6 +16,9 @@ import os
 import re
 # from models import User, Property
 from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 PORT = int(os.environ.get('PORT', '8443'))
