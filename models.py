@@ -1,55 +1,75 @@
 # from . import db
 import pymongo
-import mongoengine
 from mongoengine import *
+import os
+import datetime
 
+MONGODB_URI = os.environ.get('MONGODB_URI')
 
 class User(Document):
-    email = StringField(required=True)
-    first_name = StringField(max_length=50)
-    last_name = StringField(max_length=50)
+    date_modified = DateTimeField(default=datetime.datetime.utcnow)
+    id = StringField(primary_key = True)
+    first_name = StringField(max_length=50, required=True)
+    last_name = StringField(max_length=50, required=True)
+    doc_type = StringField(max_length=50, required=True)
+    doc_number = StringField(max_length=50, required=True)
+    fiscal_code = StringField(max_length=50, required=True)
+    
+class Property(Document):
+    date_modified = DateTimeField(default=datetime.datetime.utcnow)
+    country = StringField(max_length=50, required=True)
+    region = StringField(max_length=50, required=True)
+    city = StringField(max_length=50, required=True)
+    street = StringField(max_length=50, required=True)
+    building = StringField(max_length=50, required=True)
+    cap = StringField(max_length=50, required=True)
+    property_type = StringField(max_length=50, required=True)
+    floors = StringField(max_length=50, required=True)
+    property_size = StringField(max_length=50, required=True)
 
 
-class User(db.Model):
-	# Defines the Table Name user
-	__tablename__ = "user"
 
-	# Makes three columns into the table id, name, email
-	_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-	name = db.Column(db.String(100), nullable=False)
-	email = db.Column(db.String(100), nullable=False)
+#      self.surname = data['Last']
+#         self.gender = data['gender']
+#         self.docType = data['docType']
+#         self.docNumber = data['docNumber']
+#         self.codice = data['codice']
+#         self.street = data['street']
+#         self.city = data['city']
+#         self.region = data['region']
+#         self.postalCode = data['postalCode']
+#         # self.country = data['country'] # wont work becasue of selection menu 
+#         self.houseType = data['houseType']
+#         self.numFloor = data['numFloor']
+#         self.propSize = data['propSize']
 
-	# A constructor function where we will pass the name and email of a user and it gets add as a new entry in the table.
-	def __init__(self, data):
-        
-        self.name = data['First']
-        self.surname = data['Last']
-        self.gender = data['gender']
-        self.docType = data['docType']
-        self.docNumber = data['docNumber']
-        self.codice = data['codice']
-        self.street = data['street']
-        self.city = data['city']
-        self.region = data['region']
-        self.postalCode = data['postalCode']
-        # self.country = data['country'] # wont work becasue of selection menu 
-        self.houseType = data['houseType']
-        self.numFloor = data['numFloor']
-        self.propSize = data['propSize']
-
-    def get_user_info(self):
-        return {
+#     def get_user_info(self):
+#         return {
             
-        }
+#         }
 
-    def get_property_info(sefl):
-        return {
+#     def get_property_info(sefl):
+#         return {
 
-        }
+# class User(db.Model):
+# 	# Defines the Table Name user
+# 	__tablename__ = "user"
+
+# 	# Makes three columns into the table id, name, email
+# 	_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+# 	name = db.Column(db.String(100), nullable=False)
+# 	email = db.Column(db.String(100), nullable=False)
+
+# 	# A constructor function where we will pass the name and email of a user and it gets add as a new entry in the table.
+# 	def __init__(self, data):
+        
+#         self.name = data['First']
+   
+#         }
 
     
-    def __repr__(self):
-        return '<User {}>'.format(self.username)
+#     def __repr__(self):
+#         return '<User {}>'.format(self.username)
 
     # def details(self):
     #     return {
