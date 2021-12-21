@@ -14,7 +14,8 @@ import logging
 import datetime
 import os
 import re
-from models import User, Property
+# from models import User, Property
+from pymongo import MongoClient
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 PORT = int(os.environ.get('PORT', '8443'))
@@ -281,12 +282,13 @@ def close_conv(update: Update, context: CallbackContext) -> int:
 
     text = str(update.message.text).lower()
     if text == 'all correct':
-        user = User(user_info_dict(context.user_data))
-        property = Property(property_info_dict(context.user_data))
+        client = MongoClient(MONGODB_URI)
+        db = client.landreg
+        user = user_info_dict(context.user_data)
+        user['property'] = property_info_dict(context.user_data)
         user['date_modified'] = datetime.datetime.utcnow
-        property['date_modified'] = datetime.datetime.utcnow
-        user.save()
-        property.save()
+        result = db.landreg.insert_one(user)
+        logger.info(f'Inserted a user into db {result.inserted_id}')
         update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
         return ConversationHandler.END
     elif text == 'start again':
@@ -310,9 +312,9 @@ def user_info_dict(user_data: Dict[str, str]) -> str:
     return user_facts
 
 def property_info_dict(user_data: Dict[str, str]) -> str:
-    property_facts = {f'{key}: {value}' for key, value in user_data.items() if key in \
+    property_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
         ['id', 'Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
-        'Floors', 'Property size']}
+        'Floors', 'Property size']]
 
     return property_facts   
 
@@ -408,7 +410,7 @@ def main() -> None:
                 MessageHandler(Filters.text(['back', 'Back']), received_information)
             ]
         },
-        fallbacks = [MessageHandler(Filters.text(['cancel', 'Start again', '/start']), start_again)]
+        fallbacks = [MessageHandler(Filters.text(['cancel', '/start']), start_again)]
     )
 
     dispatcher.add_handler(conv_handler)
