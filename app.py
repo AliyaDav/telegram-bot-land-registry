@@ -280,19 +280,19 @@ def received_information(update: Update, context: CallbackContext) -> int:
 
 def close_conv(update: Update, context: CallbackContext) -> int:
 
-    text = str(update.message.text).lower()
-    if text == 'all correct':
+    text = update.message.text
+    if text == 'All correct':
         client = MongoClient(MONGODB_URI)
         db = client.landreg
         user = user_info_dict(context.user_data)
         user['property'] = property_info_dict(context.user_data)
         user['date_modified'] = datetime.datetime.utcnow
-        result = db.landreg.insert_one(user)
+        result = db.users.insert_one(user)
         logger.info(f'Inserted a user into db {result.inserted_id}')
         update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
-        return ConversationHandler.END
-    elif text == 'start again':
-        return CHOOSING_GOAL
+    #     return ConversationHandler.END
+    # elif text == 'start again':
+    return CHOOSING_GOAL
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
