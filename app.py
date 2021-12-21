@@ -1,4 +1,3 @@
-import telegram
 from typing import Dict
 from telegram.ext import (
     Updater,
@@ -8,13 +7,18 @@ from telegram.ext import (
     ConversationHandler,
     CallbackContext,
 )
-from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
-from credentials import BOT_TOKEN, APP_URL
+from uuid import uuid4
+from telegram import ReplyKeyboardMarkup, Update
+# from credentials import BOT_TOKEN, APP_URL
 import logging
+import datetime
 import os
 import re
+from models import User, Property
 
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
 PORT = int(os.environ.get('PORT', '8443'))
+MONGODB_URI = os.environ.get('MONGODB_URI')
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
@@ -47,7 +51,7 @@ def force_choosing_goal(update: Update, context: CallbackContext) -> int:
     
     reply_keyboard = [['Check property ownership', 'Get NFT', 'Buy/sell property']]
     text = update.message.text
-    logger.info(f'User texted {text}')
+    logger.info(f'User texted {text}, user_data: {context.user_data.items()}')
     update.message.reply_text('Please choose one of the following options', reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
                             one_time_keyboard=True))
     
@@ -264,6 +268,7 @@ def received_information(update: Update, context: CallbackContext) -> int:
         return GET_SIZE
     else:
         context.user_data['Property size'] = text
+        context.user_data['id'] = str(uuid4())
         reply_keyboard = [['All correct', 'Start again']]
         update.message.reply_text(
             "Awesome! Thank you, now we are all set. Please check the correctness of your data:"
@@ -276,6 +281,12 @@ def close_conv(update: Update, context: CallbackContext) -> int:
 
     text = str(update.message.text).lower()
     if text == 'all correct':
+        user = User(user_info_dict(context.user_data))
+        property = Property(property_info_dict(context.user_data))
+        user['date_modified'] = datetime.datetime.utcnow
+        property['date_modified'] = datetime.datetime.utcnow
+        user.save()
+        property.save()
         update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
         return ConversationHandler.END
     elif text == 'start again':
@@ -291,6 +302,19 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
         'Floors', 'Property size']]
 
     return "\n".join(user_facts + property_facts).join(['\n', '\n'])
+
+def user_info_dict(user_data: Dict[str, str]) -> str:
+    user_facts = {f'{key}: {value}' for key, value in user_data.items() if key in \
+        ['id', 'First name', 'Last name', 'Doc type', 'Doc number', 'Fiscal code']}
+    
+    return user_facts
+
+def property_info_dict(user_data: Dict[str, str]) -> str:
+    property_facts = {f'{key}: {value}' for key, value in user_data.items() if key in \
+        ['id', 'Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
+        'Floors', 'Property size']}
+
+    return property_facts   
 
 def start_again(update: Update, context: CallbackContext) -> int:
 
