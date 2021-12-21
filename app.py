@@ -306,15 +306,15 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
     return "\n".join(user_facts + property_facts).join(['\n', '\n'])
 
 def user_info_dict(user_data: Dict[str, str]) -> str:
-    user_facts = {f'{key}: {value}' for key, value in user_data.items() if key in \
+    user_facts = {key:value for key, value in user_data.items() if key in \
         ['id', 'First name', 'Last name', 'Doc type', 'Doc number', 'Fiscal code']}
     
     return user_facts
 
 def property_info_dict(user_data: Dict[str, str]) -> str:
-    property_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
+    property_facts = [{key: value for key, value in user_data.items() if key in \
         ['id', 'Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
-        'Floors', 'Property size']]
+        'Floors', 'Property size']}]
 
     return property_facts   
 
