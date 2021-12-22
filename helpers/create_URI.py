@@ -6,7 +6,6 @@ import json
 import csv
 import os
 import time
-import sample_jsonURI
 
 load_dotenv()
 

@@ -9,7 +9,6 @@ from telegram.ext import (
 )
 from uuid import uuid4
 from telegram import ReplyKeyboardMarkup, Update
-# from credentials import BOT_TOKEN, APP_URL
 import logging
 import datetime
 import os
@@ -20,12 +19,16 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from helpers.predict_price import predict
 from helpers.create_URI import create_URI
+from helpers.helpers import user_info_dict, property_info_dict, facts_to_str, \
+    get_owner_data, get_property_data
+from helpers.functions import MintNFT, RegisterProperty, RegisterOwner
+from vars import URL, REGISTRY_ADDRESS, NFT_ADDRESS, REGISTRY_ABI, NFT_ABI
 
 load_dotenv()
 
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
-PORT = int(os.environ.get('PORT', '8443'))
-MONGODB_URI = os.environ.get('MONGODB_URI')
+# BOT_TOKEN = os.environ.get('BOT_TOKEN')
+# PORT = int(os.environ.get('PORT', '8443'))
+# MONGODB_URI = os.environ.get('MONGODB_URI')
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
@@ -37,7 +40,10 @@ logger.info('Starting Bot...')
 CHOOSING_GOAL, GETTING_NAME, CHECK_NAME, GET_DOC_TYPE, GET_DOC_NUMBER, \
  GET_HOUSE_TYPE, GET_CODICE, GET_COUNTRY, GET_REGION, GET_CITY, GET_STREET, GET_BUILDING_NUMBER,\
  GET_CAP, GET_HOUSE_TYPE, GET_FLOORS, GET_SIZE, REQUEST_ROOMS, REQUEST_SURFACE, \
-     REQUEST_FLOORS, ESTIMATE_PRICE, CLOSING = range(20) 
+     REQUEST_FLOORS, ESTIMATE_PRICE, CLOSING, REQUEST_WALLET_ADDRESS, CHOOSE_ACTION, \
+         NFT_DONE, GOT_WALLET, REMIND_ACTION = range(25) 
+
+'''Bot functions'''
 
 def start(update: Update, context: CallbackContext) -> int:
 
@@ -181,7 +187,6 @@ def get_city(update: Update, context: CallbackContext) -> int:
         update.message.reply_text('What is the city?')
         return GET_CITY
 
-
 def get_street(update: Update, context: CallbackContext) -> int:
     
     text = update.message.text
@@ -194,7 +199,6 @@ def get_street(update: Update, context: CallbackContext) -> int:
         update.message.reply_text('What is the street?')
 
         return GET_STREET
-
 
 def get_building_number(update: Update, context: CallbackContext) -> int:
     
@@ -263,18 +267,6 @@ def get_size(update: Update, context: CallbackContext) -> int:
 
         return GET_SIZE
 
-# def go_website(update: Update, context: CallbackContext) -> int:
-    
-#     user = update.message.from_user
-#     text = update.message.text
-#     context.user_data['choice'] = text
-#     logger.info("Choice of %s: %s", user.first_name, text)
-#     logger.info(context.user_data)
-#     update.message.reply_text(f'Perfect! In order to {text.lower()}, we need to know more about you. Please follow the link and fill out the form:', reply_markup=ReplyKeyboardRemove())
-#     update.message.reply_markdown('[Blockchain Registry](https://webpage-landreg.herokuapp.com/)')
-
-#     return REDIRECTING
-
 def received_information(update: Update, context: CallbackContext) -> int:
     """Display the gathered info and ask to check."""
     
@@ -291,10 +283,21 @@ def received_information(update: Update, context: CallbackContext) -> int:
             f"{facts_to_str(context.user_data)}", reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
                                 one_time_keyboard=True))
 
-        return CLOSING
+        return REMIND_ACTION
 
 # add ownership check menu, + functions of the contracts that the user has access to.
 # require price estimation of the house
+
+def choose_action(update: Update, context: CallbackContext) -> int:
+
+    reply_keyboard = [['Estimate house price', 'Issue NFT', 'Buy/sell property'], 
+                        ['Collateralize property', 'Check ownership once'],
+                        ['Subscribe to ownership check']]
+
+    update.message.reply_text("Great! Sorry, I forgot what you wanted to do. Could you remind me again?", 
+                            reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
+                            one_time_keyboard=True))
+    return CHOOSE_ACTION
 
 def request_wallet_address(update: Update, context: CallbackContext) -> int:
 
@@ -304,17 +307,33 @@ def request_wallet_address(update: Update, context: CallbackContext) -> int:
 
     return REQUEST_WALLET_ADDRESS
 
-def upload_metadata(update: Update, context: CallbackContext) -> int:
-    
-    property_data = {v for v in context.user_data.items() if key in \
+def store_wallet_address(update: Update, context: CallbackContext) -> int:
+
+    text = update.message.text
+    logger.info(f"User wallet address - {text}")
+    context.user_data['wallet address'] = text
+
+    owner_data = get_owner_data(context)
+    property_data = get_property_data(context)
+    RegisterOwner(URL, REGISTRY_ADDRESS, REGISTRY_ABI, **owner_data)
+    RegisterProperty(URL, REGISTRY_ADDRESS, REGISTRY_ABI, **property_data)
+
+    return GOT_WALLET
+
+def mint_nft(update: Update, context: CallbackContext) -> int:
+
+    property_data = {v for k, v in context.user_data.items() if k in \
         ['Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
         'Floors', 'Property size']}
 
     token_uri = create_URI(**property_data)
-    logger.info(f"Token uri is {token_uri}")
-    update.message.reply_text(f'Your token URI is {token_uri}')
 
-    return UPLOADED_METADATA
+    MintNFT(URL, NFT_ADDRESS, NFT_ABI, token_uri)
+    logger.info(f"Token uri is {token_uri}")
+    update.message.reply_text(f'Your NFT is successfully issued. Your token URI is {token_uri}',
+                                'Type /start to go to the beginning.')
+
+    return NFT_DONE
 
 def request_house_surface(update: Update, context: CallbackContext) -> int:
     
@@ -347,7 +366,6 @@ def request_house_rooms(update: Update, context: CallbackContext) -> int:
         update.message.reply_text('How many rooms are there?')
         return REQUEST_ROOMS
 
-
 def estimate_price(update: Update, context: CallbackContext) -> int:
     
     text = update.message.text
@@ -360,12 +378,13 @@ def estimate_price(update: Update, context: CallbackContext) -> int:
         context.user_data['Rooms'] = text
         surface, rooms, floor = context.user_data['Surface'], context.user_data['Rooms'] ,context.user_data['Floor']
         estimation = predict(surface, rooms, floor)
-        update.message.reply_text(f'The estimated price of the house is {estimation}')
+        update.message.reply_text(f"The estimated price of the house is {estimation}. Please type '/start' to go to the beginning")
 
         return ESTIMATE_PRICE
 
 def close_conv(update: Update, context: CallbackContext) -> int:
     
+    # storing data in MongoDB
     # client = MongoClient(MONGODB_URI)
     # db = client.landreg
     # user = user_info_dict(context.user_data)
@@ -376,41 +395,6 @@ def close_conv(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
 
     return CHOOSING_GOAL
-
-def facts_to_str(user_data: Dict[str, str]) -> str:
-    """Helper function for formatting the gathered user info."""
-
-    user_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
-        ['First name', 'Last name', 'Doc type', 'Doc number', 'Fiscal code']]
-    property_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
-        ['Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
-        'Floors', 'Property size']]
-
-    return "\n".join(user_facts + property_facts).join(['\n', '\n'])
-
-def user_info_dict(user_data: Dict[str, str]) -> str:
-    user_facts = {key:value for key, value in user_data.items() if key in \
-        ['id', 'First name', 'Last name', 'Doc type', 'Doc number', 'Fiscal code']}
-    
-    return user_facts
-
-def property_info_dict(user_data: Dict[str, str]) -> str:
-    property_facts = [{key: value for key, value in user_data.items() if key in \
-        ['id', 'Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
-        'Floors', 'Property size']}]
-
-    return property_facts   
-
-def start_again(update: Update, context: CallbackContext) -> int:
-
-    return CHOOSING_GOAL
-
-def handle_message(update, context):
-    text = str(update.message.text).lower()
-    return text
-
-def error(update, context):
-    logger.error(f'Update {update} caused error {context.error}')
 
 def main() -> None:
     """Run the bot."""
@@ -424,7 +408,7 @@ def main() -> None:
         states={
             CHOOSING_GOAL: [
                 MessageHandler(Filters.text('Estimate house price'), request_house_surface),
-                MessageHandler(Filters.text(['Get NFT', 'Buy/sell property', 'Collateralize property', \
+                MessageHandler(Filters.text(['Issue NFT', 'Buy/sell property', 'Collateralize property', \
                     'Check ownership once','Subscribe to ownership check']), get_name_surname
                 ),
                 MessageHandler(Filters.text & ~Filters.text(['Check property ownership', 'Get NFT', 'Buy/sell property']), force_choosing_goal),
@@ -437,6 +421,12 @@ def main() -> None:
             ],
             REQUEST_ROOMS: [
                 MessageHandler(Filters.text, estimate_price)
+            ],
+            ESTIMATE_PRICE: [
+                MessageHandler(Filters.text, start)
+            ], 
+            REQUEST_WALLET_ADDRESS: [
+                 MessageHandler(Filters.text, store_wallet_address)
             ],
             # REDIRECTING: [
             #     MessageHandler(Filters.text, received_information,
@@ -499,12 +489,24 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.text(['back', 'Back']), received_information),
                 MessageHandler(Filters.text(['back', 'Back']), get_size)
             ],
+            CHOOSE_ACTION: [
+                MessageHandler(Filters.text, request_wallet_address)
+            ],
+            REMIND_ACTION: [
+                MessageHandler(Filters.text(['Issue NFT']), choose_action)
+            ],
+            GOT_WALLET: [
+                MessageHandler(Filters.text, mint_nft)
+            ],
+            NFT_DONE: [
+                MessageHandler(Filters.text, close_conv)
+            ],
             CLOSING: [
                 MessageHandler(Filters.text & ~Filters.text(['back', 'Back']), close_conv),
                 MessageHandler(Filters.text(['back', 'Back']), received_information)
             ]
         },
-        fallbacks = [MessageHandler(Filters.text(['cancel', '/start']), start_again)]
+        fallbacks = [MessageHandler(Filters.text(['cancel', '/start']), start)]
     )
 
     dispatcher.add_handler(conv_handler)
