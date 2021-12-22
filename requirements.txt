@@ -1,4 +1,5 @@
 argcomplete==1.12.3
+<<<<<<< HEAD
 click==8.0.3
 mongoengine==0.23.1
 packaging==21.3
@@ -91,3 +92,19 @@ WTForms==2.3.3
 yarl==1.7.2
 zipp==3.6.0
 
+=======
+certifi==2021.10.8
+click==8.0.3
+eth-hash==0.3.2
+eth-typing==2.2.2
+mongoengine==0.23.1
+packaging==21.3
+pi==0.1.2
+pip==21.3.1
+pipx==0.16.4
+pymongo==3.12.3
+pyparsing==3.0.6
+setuptools==58.1.0
+toolz==0.11.1
+userpath==1.7.0
+>>>>>>> main
