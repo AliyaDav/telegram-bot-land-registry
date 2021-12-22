@@ -1,7 +1,7 @@
 import pickle
 import pandas as pd
 import numpy as np
-
+from sklearn.base import TransformerMixin
 
 def predict(surface, rooms, floor):
 
@@ -12,7 +12,7 @@ def predict(surface, rooms, floor):
     
     return int(np.exp(hgbr.predict(test)))
 
-class DenseTransformer():
+class DenseTransformer(TransformerMixin):
 
     def fit(self, X, y=None, **fit_params):
             return self
