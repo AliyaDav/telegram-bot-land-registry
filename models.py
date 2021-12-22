@@ -103,16 +103,15 @@ class Property(Document):
 #     db.create_all()
 #     return
 
-
 from pymongo import MongoClient
 
 client = MongoClient('mongodb+srv://aliya:Intrusion2021@cluster0.pg1ab.mongodb.net/landreg?retryWrites=true&w=majority')
 
 user1 = {'first name': 'Aliya', 'last name': 'Davletshina'}
 db = client.landreg
-db.users.insert_one(user1)
+result = db.users.insert_one(user1)
 
-db.users['first name']
+db.users['first name']['first name']
 
 user = user_info_dict(context.user_data)
 user['property'] = property_info_dict(context.user_data)

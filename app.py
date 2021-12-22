@@ -14,9 +14,12 @@ import logging
 import datetime
 import os
 import re
+import dns
 # from models import User, Property
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from helpers.predict_price import predict
+from helpers.create_URI import create_URI
 
 load_dotenv()
 
@@ -30,14 +33,20 @@ logger = logging.getLogger(__name__)
 logger.info('Starting Bot...')
 
 ''' States'''
+
 CHOOSING_GOAL, GETTING_NAME, CHECK_NAME, GET_DOC_TYPE, GET_DOC_NUMBER, \
  GET_HOUSE_TYPE, GET_CODICE, GET_COUNTRY, GET_REGION, GET_CITY, GET_STREET, GET_BUILDING_NUMBER,\
- GET_CAP, GET_HOUSE_TYPE, GET_FLOORS, GET_SIZE, CLOSING = range(17) 
+ GET_CAP, GET_HOUSE_TYPE, GET_FLOORS, GET_SIZE, REQUEST_ROOMS, REQUEST_SURFACE, \
+     REQUEST_FLOORS, ESTIMATE_PRICE, CLOSING = range(20) 
 
 def start(update: Update, context: CallbackContext) -> int:
 
     text = update.message.text.encode('utf-8').decode()
-    reply_keyboard = [['Check property ownership', 'Get NFT', 'Buy/sell property']]
+
+    reply_keyboard = [['Estimate house price', 'Issue NFT', 'Buy/sell property'], 
+                        ['Collateralize property', 'Check ownership once'],
+                        ['Subscribe to ownership check']]
+
     logger.info(f'User texted {text}')
 
     bot_welcome = "Hello! This is blockchain-based land registry. What would you like to do?"
@@ -53,7 +62,10 @@ def start(update: Update, context: CallbackContext) -> int:
 
 def force_choosing_goal(update: Update, context: CallbackContext) -> int:
     
-    reply_keyboard = [['Check property ownership', 'Get NFT', 'Buy/sell property']]
+    # reply_keyboard = [['Check property ownership', 'Get NFT', ]]
+    reply_keyboard = [['Estimate house price', 'Issue NFT', 'Buy/sell property'], 
+                        ['Collateralize property', 'Check ownership once'],
+                        ['Subscribe to ownership check']]
     text = update.message.text
     logger.info(f'User texted {text}, user_data: {context.user_data.items()}')
     update.message.reply_text('Please choose one of the following options', reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
@@ -281,20 +293,88 @@ def received_information(update: Update, context: CallbackContext) -> int:
 
         return CLOSING
 
-def close_conv(update: Update, context: CallbackContext) -> int:
+# add ownership check menu, + functions of the contracts that the user has access to.
+# require price estimation of the house
+
+def request_wallet_address(update: Update, context: CallbackContext) -> int:
 
     text = update.message.text
-    if text == 'All correct':
-        client = MongoClient(MONGODB_URI)
-        db = client.landreg
-        user = user_info_dict(context.user_data)
-        user['property'] = property_info_dict(context.user_data)
-        user['date_modified'] = datetime.datetime.utcnow
-        result = db.users.insert_one(user)
-        logger.info(f'Inserted a user into db {result.inserted_id}')
-        update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
-    #     return ConversationHandler.END
-    # elif text == 'start again':
+    logger.info(f"User wants to {text}")
+    update.message.reply_text('Please provide your wallet address')
+
+    return REQUEST_WALLET_ADDRESS
+
+def upload_metadata(update: Update, context: CallbackContext) -> int:
+    
+    property_data = {v for v in context.user_data.items() if key in \
+        ['Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
+        'Floors', 'Property size']}
+
+    token_uri = create_URI(**property_data)
+    logger.info(f"Token uri is {token_uri}")
+    update.message.reply_text(f'Your token URI is {token_uri}')
+
+    return UPLOADED_METADATA
+
+def request_house_surface(update: Update, context: CallbackContext) -> int:
+    
+    update.message.reply_text('How much is the surface of the property?')
+
+    return REQUEST_SURFACE
+
+def request_house_floors(update: Update, context: CallbackContext) -> int:
+    
+    text = update.message.text
+    if re.findall('[^0-9]+', text):
+        update.message.reply_text('Please provide a valid surface size')
+        return REQUEST_SURFACE
+    else:
+        logger.info(f"House surface is {text}")
+        context.user_data['Surface'] = text
+        update.message.reply_text('Which floor is it?')
+
+        return REQUEST_FLOORS
+
+def request_house_rooms(update: Update, context: CallbackContext) -> int:
+    
+    text = update.message.text
+    if re.findall('[^0-9]+', text):
+        update.message.reply_text('Please provide a valid floor')
+        return REQUEST_FLOORS
+
+    else:
+        context.user_data['Floor'] = text
+        update.message.reply_text('How many rooms are there?')
+        return REQUEST_ROOMS
+
+
+def estimate_price(update: Update, context: CallbackContext) -> int:
+    
+    text = update.message.text
+    if re.findall('[^0-9]+', text):
+        update.message.reply_text('Please provide a valid number')
+
+        return REQUEST_ROOMS
+
+    else:
+        context.user_data['Rooms'] = text
+        surface, rooms, floor = context.user_data['Surface'], context.user_data['Rooms'] ,context.user_data['Floor']
+        estimation = predict(surface, rooms, floor)
+        update.message.reply_text(f'The estimated price of the house is {estimation}')
+
+        return ESTIMATE_PRICE
+
+def close_conv(update: Update, context: CallbackContext) -> int:
+    
+    # client = MongoClient(MONGODB_URI)
+    # db = client.landreg
+    # user = user_info_dict(context.user_data)
+    # user['property'] = property_info_dict(context.user_data)
+    # user['date_modified'] = datetime.datetime.utcnow
+    # result = db.users.insert_one(user)
+    # logger.info(f'Inserted a user into db {result.inserted_id}')
+    update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
+
     return CHOOSING_GOAL
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
@@ -343,9 +423,20 @@ def main() -> None:
         entry_points=[CommandHandler('start', start), MessageHandler(Filters.text('cancel'), start)],
         states={
             CHOOSING_GOAL: [
-                MessageHandler(Filters.text(['Check property ownership', 'Get NFT', 'Buy/sell property']), get_name_surname
+                MessageHandler(Filters.text('Estimate house price'), request_house_surface),
+                MessageHandler(Filters.text(['Get NFT', 'Buy/sell property', 'Collateralize property', \
+                    'Check ownership once','Subscribe to ownership check']), get_name_surname
                 ),
                 MessageHandler(Filters.text & ~Filters.text(['Check property ownership', 'Get NFT', 'Buy/sell property']), force_choosing_goal),
+            ],
+            REQUEST_SURFACE: [
+                MessageHandler(Filters.text, request_house_floors)
+            ],
+            REQUEST_FLOORS: [
+                MessageHandler(Filters.text, request_house_rooms)
+            ],
+            REQUEST_ROOMS: [
+                MessageHandler(Filters.text, estimate_price)
             ],
             # REDIRECTING: [
             #     MessageHandler(Filters.text, received_information,
