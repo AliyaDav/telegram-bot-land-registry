@@ -9,6 +9,8 @@ import time
 
 load_dotenv()
 
+PINATA_API_KEY = os.environ.get('PINATA_API_KEY')
+PINATA_API_SECRET = os.environ.get('PINATA_API_SECRET')
 #Pinata API
 # API_Key = 'ccbebfd0bead0305d402'
 # API_Secret = '0246b9b984a25470d524a988d70f276d621d49a9c58f299283bd8bf8e4563bf5'

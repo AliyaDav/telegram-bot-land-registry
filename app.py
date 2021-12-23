@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-import telegram
->>>>>>> main
 from typing import Dict
 from telegram.ext import (
     Updater,
@@ -11,7 +7,6 @@ from telegram.ext import (
     ConversationHandler,
     CallbackContext,
 )
-<<<<<<< HEAD
 from uuid import uuid4
 from telegram import ReplyKeyboardMarkup, Update
 import logging
@@ -31,18 +26,14 @@ from vars import URL, REGISTRY_ADDRESS, NFT_ADDRESS, REGISTRY_ABI, NFT_ABI
 
 load_dotenv()
 
+# URL =  os.environ.get('URL')
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
+# REGISTRY_ADDRESS =  os.environ.get('REGISTRY_ADDRESS')
+# NFT_ADDRESS =  os.environ.get('NFT_ADDRESS')
+# REGISTRY_ABI =  os.environ.get('REGISTRY_ABI')
+# NFT_ABI =  os.environ.get('NFT_ABI')
 # PORT = int(os.environ.get('PORT', '8443'))
 # MONGODB_URI = os.environ.get('MONGODB_URI')
-=======
-from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
-from credentials import BOT_TOKEN, APP_URL
-import logging
-import os
-import re
-
-PORT = int(os.environ.get('PORT', '8443'))
->>>>>>> main
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
@@ -50,7 +41,6 @@ logger = logging.getLogger(__name__)
 logger.info('Starting Bot...')
 
 ''' States'''
-<<<<<<< HEAD
 
 CHOOSING_GOAL, GETTING_NAME, CHECK_NAME, GET_DOC_TYPE, GET_DOC_NUMBER, \
  GET_HOUSE_TYPE, GET_CODICE, GET_COUNTRY, GET_REGION, GET_CITY, GET_STREET, GET_BUILDING_NUMBER,\
@@ -59,25 +49,18 @@ CHOOSING_GOAL, GETTING_NAME, CHECK_NAME, GET_DOC_TYPE, GET_DOC_NUMBER, \
          NFT_DONE, GOT_WALLET, OWNER_REGISTERED, CHECKED_PROPERTY_INFO = range(27) 
 
 '''Bot functions'''
-=======
-CHOOSING_GOAL, GETTING_NAME, CHECK_NAME, GET_DOC_TYPE, GET_DOC_NUMBER, \
- GET_HOUSE_TYPE, GET_CODICE, GET_COUNTRY, GET_REGION, GET_CITY, GET_STREET, GET_BUILDING_NUMBER,\
- GET_CAP, GET_HOUSE_TYPE, GET_FLOORS, GET_SIZE, CLOSING = range(17) 
->>>>>>> main
 
 def start(update: Update, context: CallbackContext) -> int:
 
     text = update.message.text.encode('utf-8').decode()
-<<<<<<< HEAD
 
-    reply_keyboard = [['Estimate house price', 'Register owner']]
+    reply_keyboard = [['Estimate house price', 'Register owner'],
+                        ['Register Property', 'Issue NFT']]
+
     # 'Issue NFT', 'Buy/sell property'], 
     #                     ['Collateralize property', 'Check ownership once'],
     #                     ['Subscribe to ownership check']]
 
-=======
-    reply_keyboard = [['Check property ownership', 'Get NFT', 'Buy/sell property']]
->>>>>>> main
     logger.info(f'User texted {text}')
 
     bot_welcome = "Hello! This is blockchain-based land registry. What would you like to do?"
@@ -93,18 +76,13 @@ def start(update: Update, context: CallbackContext) -> int:
 
 def force_choosing_goal(update: Update, context: CallbackContext) -> int:
     
-<<<<<<< HEAD
-    reply_keyboard = ['Estimate house price', 'Register owner']
+    reply_keyboard = [['Estimate house price', 'Register owner'],
+                        ['Register Property', 'Issue NFT']]
     # [['Estimate house price', 'Issue NFT', 'Buy/sell property'], 
     #                     ['Collateralize property', 'Check ownership once'],
     #                     ['Subscribe to ownership check']]
     text = update.message.text
     logger.info(f'User texted {text}, user_data: {context.user_data.items()}')
-=======
-    reply_keyboard = [['Check property ownership', 'Get NFT', 'Buy/sell property']]
-    text = update.message.text
-    logger.info(f'User texted {text}')
->>>>>>> main
     update.message.reply_text('Please choose one of the following options', reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
                             one_time_keyboard=True))
     
@@ -113,14 +91,9 @@ def force_choosing_goal(update: Update, context: CallbackContext) -> int:
 def get_name_surname(update: Update, context: CallbackContext) -> int:
     
     text = update.message.text
-<<<<<<< HEAD
     if text not in ['Estimate house price', 'Register owner']:
         # update.message.reply_text('Please type your name and surname again')
         return CHOOSING_GOAL
-=======
-    if text not in ['Check property ownership', 'Get NFT', 'Buy/sell property']:
-        update.message.reply_text('Please type your name and surname again')
->>>>>>> main
     else:
         context.user_data['chosen action'] = text
         update.message.reply_text(f'Perfect! In order to {text.lower()}, we need to know more about you. Please type your name and surname.')
@@ -190,7 +163,6 @@ def get_codice(update: Update, context: CallbackContext) -> int:
 def get_country(update: Update, context: CallbackContext) -> int:
     
     text = str(update.message.text).strip()
-<<<<<<< HEAD
     logger.info(f"User typed {text}")
     if text == 'Start again':
         update.message.reply_text("Let's start again")
@@ -198,17 +170,6 @@ def get_country(update: Update, context: CallbackContext) -> int:
         update.message.reply_text("Thank you! Now we need to know more about your property. Let's start with the address. What is the country?")
 
     return GET_COUNTRY
-=======
-    if re.findall('[^a-zA-Z0-9]+', text):
-        update.message.reply_text('Please provide a valid fiscal code.')
-    else:
-        context.user_data['Fiscal code'] = text
-        logger.info(f"User's codice fiscale is {text}")
-        update.message.reply_text("Perfect! We have all the necessary information to include you in the blockchain registry.\n" 
-                                "Now we need to know more about yout property. Let's start with the address. What is the country?")
-
-        return GET_COUNTRY
->>>>>>> main
 
 def get_region(update: Update, context: CallbackContext) -> int:
     
@@ -234,10 +195,6 @@ def get_city(update: Update, context: CallbackContext) -> int:
         update.message.reply_text('What is the city?')
         return GET_CITY
 
-<<<<<<< HEAD
-=======
-
->>>>>>> main
 def get_street(update: Update, context: CallbackContext) -> int:
     
     text = update.message.text
@@ -251,10 +208,6 @@ def get_street(update: Update, context: CallbackContext) -> int:
 
         return GET_STREET
 
-<<<<<<< HEAD
-=======
-
->>>>>>> main
 def get_building_number(update: Update, context: CallbackContext) -> int:
     
     text = update.message.text
@@ -322,21 +275,6 @@ def get_size(update: Update, context: CallbackContext) -> int:
 
         return GET_SIZE
 
-<<<<<<< HEAD
-=======
-# def go_website(update: Update, context: CallbackContext) -> int:
-    
-#     user = update.message.from_user
-#     text = update.message.text
-#     context.user_data['choice'] = text
-#     logger.info("Choice of %s: %s", user.first_name, text)
-#     logger.info(context.user_data)
-#     update.message.reply_text(f'Perfect! In order to {text.lower()}, we need to know more about you. Please follow the link and fill out the form:', reply_markup=ReplyKeyboardRemove())
-#     update.message.reply_markdown('[Blockchain Registry](https://webpage-landreg.herokuapp.com/)')
-
-#     return REDIRECTING
-
->>>>>>> main
 def received_information(update: Update, context: CallbackContext) -> int:
     """Display the gathered info and ask to check."""
     
@@ -346,17 +284,13 @@ def received_information(update: Update, context: CallbackContext) -> int:
         return GET_SIZE
     else:
         context.user_data['Property size'] = text
-<<<<<<< HEAD
         context.user_data['id'] = str(uuid4())
-=======
->>>>>>> main
         reply_keyboard = [['All correct', 'Start again']]
         update.message.reply_text(
             "Awesome! Thank you, now we are all set. Please check the correctness of your data:"
             f"{facts_to_str(context.user_data)}", reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
                                 one_time_keyboard=True))
 
-<<<<<<< HEAD
         return CHECKED_PROPERTY_INFO
 
 # add ownership check menu, + functions of the contracts that the user has access to.
@@ -392,7 +326,7 @@ def store_wallet_address(update: Update, context: CallbackContext) -> int:
 def register_property(update: Update, context: CallbackContext) -> int:
 
     property_data = get_property_data(context)
-    RegisterProperty(URL, REGISTRY_ADDRESS, REGISTRY_ABI, **property_data)
+    RegisterProperty(URL, REGISTRY_ADDRESS, REGISTRY_ABI, *property_data)
 
     reply_keyboard = [['Estimate house price', 'Issue NFT', 'Buy/sell property'], 
                         ['Collateralize property', 'Check ownership once'],
@@ -406,11 +340,15 @@ def register_property(update: Update, context: CallbackContext) -> int:
 
 def register_owner(update: Update, context: CallbackContext) -> int:
 
+    text = update.message.text
     owner_data = get_owner_data(context)
-    RegisterOwner(URL, REGISTRY_ADDRESS, REGISTRY_ABI, **owner_data)
+    logger.info(f'the user texted {text}, owner data is: {owner_data}')
+    RegisterOwner(URL, REGISTRY_ADDRESS, REGISTRY_ABI, *owner_data)
+    logger.info('Owner is registered')
     update.message.reply_text(
-        "Awesome! You are successfully registered. In order to register a property, please deposit money to the address: {REGISTRY_ADDRESS}",
-        'Please type "done" when payment is completed.')
+        f'Awesome! You are successfully registered. In order to register a property, please deposit money to the address: {REGISTRY_ADDRESS}',
+        # 'Please type "done" when payment is completed.'
+        )
 
     return OWNER_REGISTERED
 
@@ -429,8 +367,9 @@ def mint_nft(update: Update, context: CallbackContext) -> int:
         'Floors', 'Property size']}
 
     token_uri = create_URI(**property_data)
+    owner_address = context.user_data['wallet address']
 
-    MintNFT(URL, NFT_ADDRESS, NFT_ABI, token_uri)
+    MintNFT(URL, NFT_ADDRESS, NFT_ABI, token_uri, owner_address)
     logger.info(f"Token uri is {token_uri}")
     update.message.reply_text(f'Your NFT is successfully issued. Your token URI is {token_uri}',
                                 'Type /start to go to the beginning.')
@@ -498,40 +437,6 @@ def close_conv(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
 
     return CHOOSING_GOAL
-=======
-        return CLOSING
-
-def close_conv(update: Update, context: CallbackContext) -> int:
-
-    text = str(update.message.text).lower()
-    if text == 'all correct':
-        update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
-        return ConversationHandler.END
-    elif text == 'start again':
-        return CHOOSING_GOAL
-
-def facts_to_str(user_data: Dict[str, str]) -> str:
-    """Helper function for formatting the gathered user info."""
-
-    user_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
-        ['First name', 'Last name', 'Doc type', 'Doc number', 'Fiscal code']]
-    property_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
-        ['Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
-        'Floors', 'Property size']]
-
-    return "\n".join(user_facts + property_facts).join(['\n', '\n'])
-
-def start_again(update: Update, context: CallbackContext) -> int:
-
-    return CHOOSING_GOAL
-
-def handle_message(update, context):
-    text = str(update.message.text).lower()
-    return text
-
-def error(update, context):
-    logger.error(f'Update {update} caused error {context.error}')
->>>>>>> main
 
 def main() -> None:
     """Run the bot."""
@@ -544,11 +449,12 @@ def main() -> None:
         entry_points=[CommandHandler('start', start), MessageHandler(Filters.text('cancel'), start)],
         states={
             CHOOSING_GOAL: [
-<<<<<<< HEAD
                 MessageHandler(Filters.text('Estimate house price'), request_house_surface),
                 MessageHandler(Filters.text(['Register owner']), get_name_surname
                 ),
-                MessageHandler(Filters.text & ~Filters.text(['Register owner', 'Estimate house price']), force_choosing_goal)
+                MessageHandler(Filters.text(['Register property']), get_country),
+                MessageHandler(Filters.text(['Issue NFT']), mint_nft),
+                MessageHandler(Filters.text & ~Filters.text(['Register owner', 'Estimate house price', 'Register property', 'Issue NFT']), force_choosing_goal)
             ],
             REQUEST_SURFACE: [
                 MessageHandler(Filters.text, request_house_floors)
@@ -573,15 +479,6 @@ def main() -> None:
                 MessageHandler(Filters.text(['done', 'Done']), get_country),
                 MessageHandler(~Filters.text(['done', 'Done']), require_payment)
             ],
-=======
-                MessageHandler(Filters.text(['Check property ownership', 'Get NFT', 'Buy/sell property']), get_name_surname
-                ),
-                MessageHandler(Filters.text & ~Filters.text(['Check property ownership', 'Get NFT', 'Buy/sell property']), force_choosing_goal),
-            ],
-            # REDIRECTING: [
-            #     MessageHandler(Filters.text, received_information,
-            #     )],
->>>>>>> main
             GETTING_NAME: [
                 MessageHandler(Filters.text & ~Filters.text(['back', 'Back']), check_name),
                 MessageHandler(Filters.text(['back', 'Back']), get_name_surname)
@@ -601,11 +498,7 @@ def main() -> None:
                 MessageHandler(Filters.text(['back', 'Back']), get_doc_number)
             ],
             GET_CODICE: [
-<<<<<<< HEAD
                 MessageHandler(Filters.text & ~Filters.text(['back', 'Back']), request_wallet_address),
-=======
-                MessageHandler(Filters.text & ~Filters.text(['back', 'Back']), get_country),
->>>>>>> main
                 MessageHandler(Filters.text(['back', 'Back']), get_codice)
             ],
             GET_COUNTRY: [
@@ -644,7 +537,6 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.text(['back', 'Back']), received_information),
                 MessageHandler(Filters.text(['back', 'Back']), get_size)
             ],
-<<<<<<< HEAD
             CHECKED_PROPERTY_INFO: [
                 MessageHandler(Filters.text('All correct'), register_property),
                 MessageHandler(Filters.text('Start again'), get_country)
@@ -659,18 +551,12 @@ def main() -> None:
             NFT_DONE: [
                 MessageHandler(Filters.text, close_conv)
             ],
-=======
->>>>>>> main
             CLOSING: [
                 MessageHandler(Filters.text & ~Filters.text(['back', 'Back']), close_conv),
                 MessageHandler(Filters.text(['back', 'Back']), received_information)
             ]
         },
-<<<<<<< HEAD
         fallbacks = [MessageHandler(Filters.text(['cancel', '/start']), start)]
-=======
-        fallbacks = [MessageHandler(Filters.text(['cancel', 'Start again', '/start']), start_again)]
->>>>>>> main
     )
 
     dispatcher.add_handler(conv_handler)
@@ -686,7 +572,4 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-<<<<<<< HEAD
 
-=======
->>>>>>> main

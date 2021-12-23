@@ -6,7 +6,7 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
 
     user_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
-        ['First name', 'Last name', 'Doc type', 'Doc number', 'Fiscal code']]
+        ['First name', 'Last name', 'Doc type', 'Doc number', 'Fiscal code', 'wallet address']]
     property_facts = [f'{key}: {value}' for key, value in user_data.items() if key in \
         ['Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
         'Floors', 'Property size']]
