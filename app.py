@@ -394,11 +394,11 @@ def mint_nft(update: Update, context: CallbackContext) -> int:
     property_data = get_property_data(context)[1:]
     token_uri = create_URI(*property_data)
     owner_address = context.user_data['wallet address']
+    logger.info(f"Token uri is {token_uri}")
 
     MintNFT(URL, NFT_ADDRESS, NFT_ABI, token_uri, owner_address)
     logger.info(f"Token uri is {token_uri}")
-    update.message.reply_text(f'Your NFT is successfully issued. Your token URI is {token_uri}',
-                                'Type /start to go to the beginning.')
+    update.message.reply_text(f'Your NFT is successfully issued. Your token URI is {token_uri}')
 
     return NFT_DONE
 

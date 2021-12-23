@@ -6,7 +6,7 @@ import json
 import csv
 import os
 import time
-import sample_jsonURI
+import helpers.sample_jsonURI
 
 load_dotenv()
 
@@ -27,7 +27,7 @@ def write_metadata(property_id, property_address_country, property_address_regio
                     property_address_city, property_address_street,
                     property_address_streetnum, cap, property_type, floors, property_size):
     
-    jsonfile = sample_jsonURI.sample_URI
+    jsonfile = helpers.sample_jsonURI.sample_URI
 
     metadata_file_name = (
         "metadata_{}.json".format(str(property_id))
