@@ -55,3 +55,4 @@ def get_property_data(context):
     houseType = context.user_data['Property type']
 
     return (Owner_address, int(areaSqm), int(floor), int(zipCode), country, region, city, street, streetNumber, addressAdditional, houseType)
+
