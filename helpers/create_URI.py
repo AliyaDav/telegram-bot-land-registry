@@ -7,6 +7,7 @@ import csv
 import os
 import time
 import helpers.sample_jsonURI
+import numpy as np
 
 load_dotenv()
 
@@ -23,10 +24,10 @@ ENDPOINT = 'pinning/pinFileToIPFS'
 HEADERS = {'pinata_api_key': os.getenv('PINATA_API_KEY'),
            'pinata_secret_api_key': os.getenv('PINATA_API_SECRET')}
 
-def write_metadata(property_id, property_address_country, property_address_region,
-                    property_address_city, property_address_street,
-                    property_address_streetnum, cap, property_type, floors, property_size):
-    
+def write_metadata(property_id, property_size, floors, cap, property_address_country, property_address_region, 
+                    property_address_city, property_address_street, property_address_streetnum, 
+                    addressAdditional, property_type):
+
     jsonfile = helpers.sample_jsonURI.sample_URI
 
     metadata_file_name = (
@@ -53,11 +54,13 @@ def write_metadata(property_id, property_address_country, property_address_regio
         with open(metadata_file_name, "w") as file:
             json.dump(jsonfile, file)
 
-#Function that creates a json file with the metadata in the proper format
-def create_URI(property_id, property_address_country, property_address_region,
-                property_address_city, property_address_street,
-                property_address_streetnum, cap, property_type, floors, property_size):
-                
+# Function that creates a json file with the metadata in the proper format
+def create_URI(property_size, floors, cap, property_address_country, property_address_region,
+                    property_address_city, property_address_street, property_address_streetnum, 
+                    addressAdditional, property_type):
+    
+    property_id = np.random.randint(0,1000000)
+
     filename = "metadata_{}".format(property_id)
     item = {'filename': filename}
 
@@ -73,9 +76,9 @@ def create_URI(property_id, property_address_country, property_address_region,
         dictWriter = csv.DictWriter(fileWriter, fieldnames)
    
     #load the sample json file
-    write_metadata(property_id, property_address_country, property_address_region,\
-                    property_address_city, property_address_street,\
-                    property_address_streetnum, cap, property_type, floors, property_size)
+    write_metadata(property_id, property_size, floors, cap, property_address_country, property_address_region, \
+                    property_address_city, property_address_street, property_address_streetnum, \
+                    addressAdditional, property_type)
 
     #Create the URI
     resp = requests.post(PINATA_BASE_URL + ENDPOINT,
@@ -107,6 +110,4 @@ def create_URI(property_id, property_address_country, property_address_region,
 
     else:
         print(f"{filename} upload failed.")
-
-# uri = create_URI('1', 'Italy', 'Lom', 'Milan', 'Font', '23', '245', 'Castle', '4', '234')
                 
