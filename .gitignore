@@ -1,4 +1,8 @@
 __pycache__/
+helpers/__pycache__/
 credentials.py
-*.md
-models.py
+helpers/models.py
+
+.csv
+.pickle
+vars.py
