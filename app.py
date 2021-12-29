@@ -371,7 +371,7 @@ def register_owner(update: Update, context: CallbackContext) -> int:
     RegisterOwner(URL, REGISTRY_ADDRESS, REGISTRY_ABI, *owner_data)
     logger.info('Owner is registered')
     update.message.reply_text(
-        f'Awesome! You are successfully registered. In order to register a property, please deposit money to the address: {REGISTRY_ADDRESS}',
+        f'Awesome! You are successfully registered. In order to register a property, please deposit money to the address: {REGISTRY_ADDRESS}. Type "done" when payment is completed.',
         # 'Please type "done" when payment is completed.'
         )
 
@@ -381,7 +381,8 @@ def require_payment(update: Update, context: CallbackContext) -> int:
 
     text = update.message.text 
     logger.info(f"User typed {text}")   
-    update.message.reply_text(f'In order to proceed please deposit money to the address: {REGISTRY_ADDRESS}')
+    update.message.reply_text(f'In order to proceed please deposit money to the address: {REGISTRY_ADDRESS}.
+    Type "done" when payment is completed.')
 
     return OWNER_REGISTERED
 
