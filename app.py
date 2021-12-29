@@ -10,12 +10,8 @@ from telegram.ext import (
 from uuid import uuid4
 from telegram import ReplyKeyboardMarkup, Update
 import logging
-import datetime
 import os
 import re
-import dns
-# from models import User, Property
-from pymongo import MongoClient
 from dotenv import load_dotenv
 from helpers.predict_price import predict
 from helpers.create_URI import create_URI
@@ -26,21 +22,21 @@ from vars import URL, REGISTRY_ADDRESS, NFT_ADDRESS, REGISTRY_ABI, NFT_ABI
 
 load_dotenv()
 
-# URL =  os.environ.get('URL')
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
-# REGISTRY_ADDRESS =  os.environ.get('REGISTRY_ADDRESS')
-# NFT_ADDRESS =  os.environ.get('NFT_ADDRESS')
-# REGISTRY_ABI =  os.environ.get('REGISTRY_ABI')
-# NFT_ABI =  os.environ.get('NFT_ABI')
-# PORT = int(os.environ.get('PORT', '8443'))
-# MONGODB_URI = os.environ.get('MONGODB_URI')
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.info('Starting Bot...')
 
-''' States'''
+# TODO: 
+# 1) add calling functions from the contracts
+# 2) add subscription and notoficitations
+# 3) add ownership check once
+# 4) add webhook
+# 5) if the property is registered, do not ask for house info when issuing nft
+
+'''States'''
 
 CHOOSING_GOAL, GETTING_NAME, CHECK_NAME, GET_DOC_TYPE, GET_DOC_NUMBER, \
  GET_HOUSE_TYPE, GET_CODICE, GET_COUNTRY, GET_REGION, GET_CITY, GET_STREET, GET_BUILDING_NUMBER,\
@@ -58,9 +54,8 @@ def start(update: Update, context: CallbackContext) -> int:
     reply_keyboard = [['Estimate house price', 'Register owner'],
                         ['Register Property', 'Issue NFT']]
 
-    # 'Issue NFT', 'Buy/sell property'], 
-    #                     ['Collateralize property', 'Check ownership once'],
-    #                     ['Subscribe to ownership check']]
+    #                     [['Issue NFT', 'Buy/sell property'], 
+    #                     ['Subscribe to ownership check','Check ownership once']]
 
     logger.info(f'User texted {text}')
 
@@ -79,9 +74,7 @@ def force_choosing_goal(update: Update, context: CallbackContext) -> int:
     
     reply_keyboard = [['Estimate house price', 'Register owner'],
                         ['Register Property', 'Issue NFT']]
-    # [['Estimate house price', 'Issue NFT', 'Buy/sell property'], 
-    #                     ['Collateralize property', 'Check ownership once'],
-    #                     ['Subscribe to ownership check']]
+
     text = update.message.text
     logger.info(f'User texted {text}, user_data: {context.user_data.items()}')
     update.message.reply_text('Please choose one of the following options', reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
@@ -93,7 +86,6 @@ def get_name_surname(update: Update, context: CallbackContext) -> int:
     
     text = update.message.text
     if text not in ['Estimate house price', 'Register owner']:
-        # update.message.reply_text('Please type your name and surname again')
         return CHOOSING_GOAL
     else:
         context.user_data['chosen action'] = text
@@ -167,8 +159,6 @@ def get_country(update: Update, context: CallbackContext) -> int:
     logger.info(f"User typed {text}")
     if text == 'Start again':
         update.message.reply_text("Let's start again")
-    # if text == 'Issue NFT':
-    #     context.user_data['choice'] = text
     else:
         update.message.reply_text("Thank you! Now we need to know more about your property. Let's start with the address. What is the country?")
 
@@ -279,7 +269,6 @@ def get_size(update: Update, context: CallbackContext) -> int:
         return GET_SIZE
 
 def received_property_information(update: Update, context: CallbackContext) -> int:
-    """Display the gathered info and ask to check."""
     
     text = update.message.text
     if re.findall('[^0-9]+', text):
@@ -296,7 +285,6 @@ def received_property_information(update: Update, context: CallbackContext) -> i
         return CHECKED_PROPERTY_INFO
 
 def received_user_information(update: Update, context: CallbackContext) -> int:
-    """Display the gathered info and ask to check."""
     
     text = update.message.text
     context.user_data['wallet address'] = text
@@ -308,8 +296,6 @@ def received_user_information(update: Update, context: CallbackContext) -> int:
                             one_time_keyboard=True))
 
     return CHECKED_USER_INFO
-
-# add ownership check menu, + functions of the contracts that the user has access to.
 
 def request_wallet_address_for_owner(update: Update, context: CallbackContext) -> int:
     
@@ -349,16 +335,13 @@ def store_wallet_address(update: Update, context: CallbackContext) -> int:
         "Awesome! Thank you, now we are all set. Please check the correctness of your data:"
         f"{facts_to_str(context.user_data)}", reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True,
                             one_time_keyboard=True))
-    # context.user_data['id'] = str(uuid4())
 
     return GOT_WALLET
 
 def register_property(update: Update, context: CallbackContext) -> int:
 
     property_data = get_property_data(context)
-
     RegisterProperty(URL, REGISTRY_ADDRESS, REGISTRY_ABI, *property_data)
-
     update.message.reply_text("Your property has been registered. Type /start to return to the beginning")
     
     return CHOOSE_ACTION
@@ -372,7 +355,6 @@ def register_owner(update: Update, context: CallbackContext) -> int:
     logger.info('Owner is registered')
     update.message.reply_text(
         f'Awesome! You are successfully registered. In order to register a property, please deposit money to the address: {REGISTRY_ADDRESS}. Type "done" when payment is completed.',
-        # 'Please type "done" when payment is completed.'
         )
 
     return OWNER_REGISTERED
@@ -381,16 +363,11 @@ def require_payment(update: Update, context: CallbackContext) -> int:
 
     text = update.message.text 
     logger.info(f"User typed {text}")   
-    update.message.reply_text(f'In order to proceed please deposit money to the address: {REGISTRY_ADDRESS}.
-    Type "done" when payment is completed.')
+    update.message.reply_text(f'In order to proceed please deposit money to the address: {REGISTRY_ADDRESS}.Type "done" when payment is completed.')
 
     return OWNER_REGISTERED
 
 def mint_nft(update: Update, context: CallbackContext) -> int:
-
-    # property_data = {v for k, v in context.user_data.items() if k in \
-    #     ['Country', 'Region', 'City', 'Street', 'buildnig number', 'Cap', 'Property type', 
-    #     'Floors', 'Property size']}
 
     property_data = get_property_data(context)[1:]
     token_uri = create_URI(*property_data)
@@ -453,25 +430,16 @@ def estimate_price(update: Update, context: CallbackContext) -> int:
 
 def close_conv(update: Update, context: CallbackContext) -> int:
     
-    # storing data in MongoDB
-    # client = MongoClient(MONGODB_URI)
-    # db = client.landreg
-    # user = user_info_dict(context.user_data)
-    # user['property'] = property_info_dict(context.user_data)
-    # user['date_modified'] = datetime.datetime.utcnow
-    # result = db.users.insert_one(user)
-    # logger.info(f'Inserted a user into db {result.inserted_id}')
     update.message.reply_text("Thank you! Our team will check all the information provided and will come back to you soon.")
 
     return CHOOSING_GOAL
 
 def main() -> None:
-    """Run the bot."""
+    """Run the bot"""
 
     updater = Updater(BOT_TOKEN)
     dispatcher = updater.dispatcher
 
-    # Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start), MessageHandler(Filters.text('cancel'), start)],
         states={
@@ -579,10 +547,6 @@ def main() -> None:
             ],
             CHOOSE_ACTION: [
                 MessageHandler(Filters.text('Issue NFT'), mint_nft)
-                # MessageHandler(Filters.text('Issue NFT'), mint_nft)
-                # MessageHandler(Filters.text('Issue NFT'), mint_nft)
-                # MessageHandler(Filters.text('Issue NFT'), mint_nft)
-                # MessageHandler(Filters.text('Issue NFT'), mint_nft)
             ],
             NFT_DONE: [
                 MessageHandler(Filters.text, close_conv)

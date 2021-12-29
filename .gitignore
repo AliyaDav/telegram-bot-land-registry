@@ -6,3 +6,7 @@ helpers/models.py
 .csv
 .pickle
 vars.py
+req.txt
+reqs.txt
+*.csv
+*.env
